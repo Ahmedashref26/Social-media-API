@@ -3,18 +3,42 @@ const bcrypt = require('bcrypt');
 
 const catchAsync = require('../util/catchAsync');
 
-exports.getUser = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.params.id).select(
-    '-__v -isAdmin -createdAt -updatedAt'
-  );
+exports.getUser = async (req, res, next) => {
+  try {
+    const { userId, username } = req.query;
 
-  if (!user) throw new Error('There is no user with that id');
+    const user = userId
+      ? await User.findById(userId)
+      : await User.findOne({ username });
+
+    if (!user) throw new Error('There is no user with that id or username');
+
+    res.status(200).json({
+      status: 'success',
+      user,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.getUserFriends = catchAsync(async (req, res, next) => {
+  const currentUser = await User.findById(req.params.id);
+  if (!currentUser)
+    return res.status(404).json({
+      status: 'failed',
+      message: 'There is no user with that ID',
+    });
+
+  const friends = await Promise.all(
+    currentUser.followings.map((friend) =>
+      User.findById(friend).select('_id profilePicture username name')
+    )
+  );
 
   res.status(200).json({
     status: 'success',
-    data: {
-      data: user,
-    },
+    friends,
   });
 });
 
@@ -29,10 +53,8 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     });
     return res.status(200).json({
       status: 'success',
-      data: {
-        message: 'account updated successfully',
-        user: updatedUser,
-      },
+      message: 'account updated successfully',
+      user: updatedUser,
     });
   } else {
     return res.status(403).json({
@@ -59,17 +81,17 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 });
 
 exports.followUser = catchAsync(async (req, res, next) => {
-  if (req.body.userId === req.params.id)
+  if (req.user._id === req.params.id)
     return res.status(400).json({
       status: 'failed',
       message: "You can't follow yourself",
     });
 
   const followedUser = await User.findById(req.params.id);
-  const currentUser = await User.findById(req.body.userId);
+  const currentUser = await User.findById(req.user._id);
 
-  if (!followedUser.followers.includes(req.body.userId)) {
-    await followedUser.updateOne({ $push: { followers: req.body.userId } });
+  if (!followedUser.followers.includes(req.user._id)) {
+    await followedUser.updateOne({ $push: { followers: req.user._id } });
     await currentUser.updateOne({ $push: { followings: req.params.id } });
 
     return res.status(200).json({
@@ -85,17 +107,17 @@ exports.followUser = catchAsync(async (req, res, next) => {
 });
 
 exports.unFollowUser = catchAsync(async (req, res, next) => {
-  if (req.body.userId === req.params.id)
+  if (req.user._id === req.params.id)
     return res.status(400).json({
       status: 'failed',
       message: "You can't unfollow yourself",
     });
 
   const followedUser = await User.findById(req.params.id);
-  const currentUser = await User.findById(req.body.userId);
+  const currentUser = await User.findById(req.user._id);
 
-  if (followedUser.followers.includes(req.body.userId)) {
-    await followedUser.updateOne({ $pull: { followers: req.body.userId } });
+  if (followedUser.followers.includes(req.user._id)) {
+    await followedUser.updateOne({ $pull: { followers: req.user._id } });
     await currentUser.updateOne({ $pull: { followings: req.params.id } });
 
     return res.status(200).json({

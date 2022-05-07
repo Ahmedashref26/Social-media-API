@@ -1,6 +1,5 @@
 const Post = require('../models/postModel');
 const User = require('../models/userModel');
-
 const catchAsync = require('../util/catchAsync');
 
 exports.getPost = catchAsync(async (req, res, next) => {
@@ -10,25 +9,31 @@ exports.getPost = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      data: post,
-    },
+    post,
   });
 });
 
 exports.getUserPosts = catchAsync(async (req, res, next) => {
-  const currentUser = await User.findById(req.body.userId);
+  const currentUser = await User.findById(req.params.userId);
+  const userPosts = await Post.find({ user: currentUser._id });
+
+  res.status(200).json({
+    status: 'success',
+    posts: userPosts,
+  });
+});
+
+exports.getUserTimeline = catchAsync(async (req, res, next) => {
+  const currentUser = req.user;
   const userPosts = await Post.find({ user: currentUser._id });
   const friendsPosts = await Promise.all(
     currentUser.followings.map((friendId) => Post.find({ user: friendId }))
   );
-  const allUserPosts = userPosts.concat(friendsPosts);
+  const allUserPosts = userPosts.concat(...friendsPosts);
 
   res.status(200).json({
     status: 'success',
-    data: {
-      posts: allUserPosts,
-    },
+    posts: allUserPosts,
   });
 });
 
@@ -42,9 +47,7 @@ exports.addPost = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     status: 'success',
-    data: {
-      post: newPost,
-    },
+    post: newPost,
   });
 });
 
@@ -91,13 +94,13 @@ exports.likePost = catchAsync(async (req, res, next) => {
     await post.updateOne({ $push: { likes: req.body.userId } });
     return res.status(200).json({
       status: 'success',
-      message: 'post has been liked ',
+      message: 'post has been liked',
     });
   } else {
     await post.updateOne({ $pull: { likes: req.body.userId } });
     return res.status(200).json({
       status: 'success',
-      message: 'post has been disliked ',
+      message: 'post has been disliked',
     });
   }
 });

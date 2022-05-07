@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema(
       maxlength: [20, 'username must be lower than 20 characters'],
       unique: [true, 'username must be unique please choose another username'],
     },
+    name: {
+      type: String,
+      required: [true, 'A user must have a name'],
+    },
     email: {
       type: String,
       maxlength: 50,
@@ -70,6 +74,11 @@ userSchema.pre('save', async function (next) {
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
 
+  next();
+});
+
+userSchema.pre(/^find/, function (next) {
+  this.select('-__v -isAdmin -createdAt -updatedAt');
   next();
 });
 

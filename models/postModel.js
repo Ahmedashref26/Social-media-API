@@ -23,6 +23,11 @@ const postSchema = new mongoose.Schema(
   }
 );
 
+postSchema.pre(/^find/, function (next) {
+  this.populate('user');
+  next();
+});
+
 const Post = mongoose.model('Post', postSchema);
 
 module.exports = Post;

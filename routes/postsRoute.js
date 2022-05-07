@@ -1,3 +1,4 @@
+const { protect } = require('../controllers/authController');
 const {
   addPost,
   updatePost,
@@ -5,12 +6,14 @@ const {
   likePost,
   getPost,
   getUserPosts,
+  getUserTimeline,
 } = require('../controllers/postController');
 
 const router = require('express').Router();
 
 router.post('/', addPost);
-router.get('/timeline', getUserPosts);
+router.get('/timeline', protect, getUserTimeline);
+router.get('/profile/:userId', getUserPosts);
 router.route('/:id').get(getPost).put(updatePost).delete(deletePost);
 router.put('/:id/like', likePost);
 
