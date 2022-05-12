@@ -72,7 +72,7 @@ exports.updatePost = catchAsync(async (req, res, next) => {
 exports.deletePost = catchAsync(async (req, res, next) => {
   const post = await Post.findById(req.params.id);
 
-  if (post.user.toHexString() !== req.body.userId) {
+  if (post.user._id.toHexString() !== req.user._id.toHexString()) {
     return res.status(400).json({
       status: 'failed',
       message: 'You can only delete your posts',

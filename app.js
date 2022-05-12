@@ -11,6 +11,7 @@ const path = require('path');
 
 const usersRoute = require('./routes/usersRoute');
 const postsRoute = require('./routes/postsRoute');
+const conversationRoute = require('./routes/conversationRoute');
 const { protect } = require('./controllers/authController');
 
 const app = express();
@@ -38,7 +39,7 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
 // Limit requrests from the same IP
 const limiter = rateLimit({
-  max: 100,
+  max: 200,
   windowMs: 3600000,
   message: 'Too many requests from this IP, Please try agian in an hour!',
 });
@@ -90,5 +91,6 @@ app.post('/api/v1/upload', protect, uploadPhoto, (req, res) => {
 // Routes
 app.use('/api/v1/users', usersRoute);
 app.use('/api/v1/posts', postsRoute);
+app.use('/api/v1/conversation', conversationRoute);
 
 module.exports = app;
