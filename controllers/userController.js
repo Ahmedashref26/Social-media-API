@@ -2,6 +2,7 @@ const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 
 const catchAsync = require('../util/catchAsync');
+const AppError = require('../util/appError');
 
 exports.getUser = catchAsync(async (req, res, next) => {
   const { userId, username } = req.query;
@@ -10,7 +11,8 @@ exports.getUser = catchAsync(async (req, res, next) => {
     ? await User.findById(userId)
     : await User.findOne({ username });
 
-  if (!user) throw new Error('There is no user with that id or username');
+  if (!user)
+    return next(new AppError('There is no user with that id or username', 404));
 
   res.status(200).json({
     status: 'success',
@@ -44,10 +46,7 @@ exports.searchUsers = catchAsync(async (req, res, next) => {
 exports.getUserFriends = catchAsync(async (req, res, next) => {
   const currentUser = await User.findById(req.params.id);
   if (!currentUser)
-    return res.status(404).json({
-      status: 'failed',
-      message: 'There is no user with that ID',
-    });
+    return next(new AppError('There is no user with that ID', 404));
 
   const friends = await Promise.all(
     currentUser.followings.map((friend) =>
@@ -76,10 +75,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
       user: updatedUser,
     });
   } else {
-    return res.status(403).json({
-      status: 'failed',
-      message: 'You can only update your account',
-    });
+    return next(new AppError('You can only update your account', 403));
   }
 });
 
@@ -92,19 +88,13 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
       data: null,
     });
   } else {
-    return res.status(403).json({
-      status: 'failed',
-      message: 'You can only update your account',
-    });
+    return next(new AppError('You can only update your account', 403));
   }
 });
 
 exports.followUser = catchAsync(async (req, res, next) => {
   if (req.user._id === req.params.id)
-    return res.status(400).json({
-      status: 'failed',
-      message: "You can't follow yourself",
-    });
+    return next(new AppError("You can't follow yourself", 400));
 
   const followedUser = await User.findById(req.params.id);
   const currentUser = await User.findById(req.user._id);
@@ -118,19 +108,13 @@ exports.followUser = catchAsync(async (req, res, next) => {
       message: 'User has been followed',
     });
   } else {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'You already following this user',
-    });
+    return next(new AppError('You already following this user', 400));
   }
 });
 
 exports.unFollowUser = catchAsync(async (req, res, next) => {
   if (req.user._id === req.params.id)
-    return res.status(400).json({
-      status: 'failed',
-      message: "You can't unfollow yourself",
-    });
+    return next(new AppError("You can't unfollow yourself", 400));
 
   const followedUser = await User.findById(req.params.id);
   const currentUser = await User.findById(req.user._id);
@@ -144,9 +128,6 @@ exports.unFollowUser = catchAsync(async (req, res, next) => {
       message: 'User has been unfollowed',
     });
   } else {
-    return res.status(400).json({
-      status: 'failed',
-      message: "You don't follow this user",
-    });
+    return next(new AppError("You don't follow this user", 400));
   }
 });

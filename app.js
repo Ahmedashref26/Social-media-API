@@ -9,6 +9,8 @@ const xss = require('xss-clean');
 const multer = require('multer');
 const path = require('path');
 
+const AppError = require('./util/appError');
+const errorHandler = require('./controllers/errorController');
 const usersRoute = require('./routes/usersRoute');
 const postsRoute = require('./routes/postsRoute');
 const conversationRoute = require('./routes/conversationRoute');
@@ -92,5 +94,10 @@ app.post('/api/v1/upload', protect, uploadPhoto, (req, res) => {
 app.use('/api/v1/users', usersRoute);
 app.use('/api/v1/posts', postsRoute);
 app.use('/api/v1/conversation', conversationRoute);
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+app.use(errorHandler);
 
 module.exports = app;

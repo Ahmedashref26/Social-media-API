@@ -1,6 +1,7 @@
 const Post = require('../models/postModel');
 const User = require('../models/userModel');
 const catchAsync = require('../util/catchAsync');
+const AppError = require('../util/appError');
 
 exports.getPost = catchAsync(async (req, res, next) => {
   const post = await Post.findById(req.params.id);
@@ -55,10 +56,7 @@ exports.updatePost = catchAsync(async (req, res, next) => {
   const post = await Post.findById(req.params.id);
 
   if (post.user.toHexString() !== req.body.userId) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'You can only update your posts',
-    });
+    return next(new AppError('You can only update your posts', 400));
   }
 
   await post.updateOne({ $set: req.body });
@@ -73,10 +71,7 @@ exports.deletePost = catchAsync(async (req, res, next) => {
   const post = await Post.findById(req.params.id);
 
   if (post.user._id.toHexString() !== req.user._id.toHexString()) {
-    return res.status(400).json({
-      status: 'failed',
-      message: 'You can only delete your posts',
-    });
+    return next(new AppError('You can only delete your posts', 400));
   }
 
   await post.deleteOne();
