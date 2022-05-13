@@ -3,24 +3,43 @@ const bcrypt = require('bcrypt');
 
 const catchAsync = require('../util/catchAsync');
 
-exports.getUser = async (req, res, next) => {
-  try {
-    const { userId, username } = req.query;
+exports.getUser = catchAsync(async (req, res, next) => {
+  const { userId, username } = req.query;
 
-    const user = userId
-      ? await User.findById(userId)
-      : await User.findOne({ username });
+  const user = userId
+    ? await User.findById(userId)
+    : await User.findOne({ username });
 
-    if (!user) throw new Error('There is no user with that id or username');
+  if (!user) throw new Error('There is no user with that id or username');
 
-    res.status(200).json({
-      status: 'success',
-      user,
-    });
-  } catch (err) {
-    console.log(err);
-  }
-};
+  res.status(200).json({
+    status: 'success',
+    user,
+  });
+});
+
+exports.searchUsers = catchAsync(async (req, res, next) => {
+  const { q, limit = 0 } = req.query;
+
+  // const regex = { $regex: q, $options: 'i' };
+  // const users = await User.find({
+  //   $or: [{ name: regex }, { username: regex }, { email: regex }],
+  // });
+  const users = await User.find({ name: { $regex: q, $options: 'i' } }).limit(
+    limit
+  );
+
+  const total = await User.countDocuments({
+    name: { $regex: q, $options: 'i' },
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: users.length,
+    total,
+    users,
+  });
+});
 
 exports.getUserFriends = catchAsync(async (req, res, next) => {
   const currentUser = await User.findById(req.params.id);

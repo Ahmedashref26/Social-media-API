@@ -6,6 +6,7 @@ const {
   followUser,
   unFollowUser,
   getUserFriends,
+  searchUsers,
 } = require('../controllers/userController');
 
 const router = require('express').Router();
@@ -13,6 +14,7 @@ const router = require('express').Router();
 router.get('/', getUser);
 router.post('/signup', signup);
 router.post('/login', login);
+router.get('/search', searchUsers);
 router.put('/:id', updateUser);
 router.get('/friends/:id', getUserFriends);
 router.put('/:id/follow', protect, followUser);
