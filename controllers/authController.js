@@ -87,3 +87,20 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = verifiedUser;
   next();
 });
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  const { currentPassword, password } = req.body;
+  const user = await User.findById(req.user._id).select('+password');
+
+  if (!(await user.checkPassword(currentPassword, user.password)))
+    return next(
+      new AppError(
+        'You have entered the wrong password. Please try again later',
+        401
+      )
+    );
+
+  user.password = password;
+  await user.save();
+  sendToken(user, 200, req, res);
+});

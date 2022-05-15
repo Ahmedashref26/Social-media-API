@@ -7,9 +7,14 @@ exports.addComment = catchAsync(async (req, res, next) => {
 
   const newComment = await Comment.create(req.body);
 
+  const comment = await newComment.populate({
+    path: 'user',
+    select: 'name profilePicture',
+  });
+
   res.status(201).json({
     status: 'success',
-    comment: newComment,
+    comment,
   });
 });
 

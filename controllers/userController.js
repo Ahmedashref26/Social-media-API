@@ -61,22 +61,30 @@ exports.getUserFriends = catchAsync(async (req, res, next) => {
 });
 
 exports.updateUser = catchAsync(async (req, res, next) => {
-  if (req.body.userId === req.params.id || req.body.isAdmin) {
-    if (req.body.password) {
-      const salt = bcrypt.genSalt(12);
-      req.body.password = await bcrypt.hash(req.body.password, salt);
-    }
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, {
+  if (req.body.password)
+    return next(
+      new AppError(
+        'This route is not for password updates please use /updateMyPassword',
+        400
+      )
+    );
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
       $set: req.body,
-    });
-    return res.status(200).json({
-      status: 'success',
-      message: 'account updated successfully',
-      user: updatedUser,
-    });
-  } else {
-    return next(new AppError('You can only update your account', 403));
-  }
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'account updated successfully',
+    user: updatedUser,
+  });
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
