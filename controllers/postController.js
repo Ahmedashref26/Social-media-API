@@ -40,7 +40,7 @@ exports.getUserTimeline = catchAsync(async (req, res, next) => {
 
 exports.addPost = catchAsync(async (req, res, next) => {
   const post = {
-    user: req.body.userId,
+    user: req.user._id,
     description: req.body.description,
     image: req.body.image,
   };
@@ -55,11 +55,19 @@ exports.addPost = catchAsync(async (req, res, next) => {
 exports.updatePost = catchAsync(async (req, res, next) => {
   const post = await Post.findById(req.params.id);
 
-  if (post.user.toHexString() !== req.body.userId) {
+  if (post.user._id.toHexString() !== req.user._id.toHexString()) {
     return next(new AppError('You can only update your posts', 400));
   }
 
-  await post.updateOne({ $set: req.body });
+  const { description, image } = req.body;
+
+  const updatedPost = {
+    user: req.user._id,
+    description,
+    image,
+  };
+
+  await post.updateOne({ $set: updatedPost });
 
   res.status(200).json({
     status: 'success',

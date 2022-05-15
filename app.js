@@ -81,7 +81,7 @@ const uploadPhoto = upload.single('file');
 app.post('/api/v1/upload', protect, uploadPhoto, (req, res) => {
   try {
     return res.status(200).json({
-      status: 'succuss',
+      status: 'success',
       message: 'file uploaded successfully!',
       filename: req.file.filename,
     });

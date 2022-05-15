@@ -20,11 +20,22 @@ const postSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
+postSchema.virtual('comments', {
+  ref: 'Comment',
+  foreignField: 'post',
+  localField: '_id',
+});
+
 postSchema.pre(/^find/, function (next) {
-  this.populate('user');
+  this.populate({
+    path: 'user',
+    select: 'username name profilePicture',
+  });
   next();
 });
 
