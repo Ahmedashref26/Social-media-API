@@ -3,13 +3,28 @@ const Message = require('../models/messageModel');
 const catchAsync = require('../util/catchAsync');
 
 exports.createConv = catchAsync(async (req, res, next) => {
+  const conv = await Conversation.findOne({
+    members: { $all: [req.user._id, req.body.receiverId] },
+  });
+
+  if (conv)
+    return res.status(200).json({
+      status: 'success',
+      conversation: conv,
+    });
+
   const newConv = await Conversation.create({
     members: [req.user._id, req.body.receiverId],
   });
 
+  const conversation = await newConv.populate({
+    path: 'members',
+    select: 'username name profilePicture email',
+  });
+
   res.status(200).json({
     status: 'success',
-    conversation: newConv,
+    conversation,
   });
 });
 

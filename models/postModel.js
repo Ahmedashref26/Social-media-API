@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Comment = require('./commentModel');
 
 const postSchema = new mongoose.Schema(
   {
@@ -31,7 +32,7 @@ postSchema.virtual('comments', {
   localField: '_id',
 });
 
-postSchema.pre(/^find/, function (next) {
+postSchema.pre(/^find/, async function (next) {
   this.populate({
     path: 'user',
     select: 'username name profilePicture',
