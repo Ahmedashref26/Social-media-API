@@ -1,5 +1,6 @@
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const http = require('http');
 
 process.on('uncaughtException', (err) => {
   console.log('UNCAUGHT EXCEPTION! 💥Shutting down...!');
@@ -14,12 +15,19 @@ const DB = process.env.DATABASE;
 mongoose.connect(DB).then(() => console.log('DB connection successful!'));
 
 const app = require('./app');
+const server = http.createServer(app);
 
 const port = process.env.PORT || 8000;
 
-const server = app.listen(port, () => {
+// const server = app.listen(port, () => {
+//   console.log(`Server is running on port ${port}`);
+// });
+
+server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+require('./socket')(server);
 
 process.on('unhandledRejection', (err) => {
   console.log('UNHANDLED REJECTION! 💥Shutting down...!');
